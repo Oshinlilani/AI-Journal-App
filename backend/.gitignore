@@ -1,0 +1,16 @@
+.env
+node_modules
+dist
+coverage
+logs
+*.log
+.DS_Store
+.idea   
+.vscode
+
+# Ignore build files
+build
+
+# Ignore test files
+*.test.js
+*.spec.js
