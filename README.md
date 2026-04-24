@@ -6,7 +6,7 @@ A full-stack journaling app where you can write, read, update, and delete journa
 
 - **Frontend:** React + Vite
 - **Backend:** Node.js + Express
-- **Database:** MongoDB (Mongoose)
+- **Database:** PostgreSQL
 - **Auth:** JWT + bcrypt
 - **AI:** Groq API (Llama 3.3 70b) — free tier
 
@@ -22,7 +22,10 @@ A full-stack journaling app where you can write, read, update, and delete journa
 
 ```
 ├── backend/
-│   ├── models/         # User, Journal schemas
+│   ├── db/
+│   │   ├── migrations/     # SQL migration files
+│   │   ├── client.js       # PostgreSQL pool
+│   │   └── migrate.js      # Migration runner
 │   ├── routes/         # auth.js, journals.js
 │   ├── middleware/     # JWT auth middleware
 │   ├── server.js
@@ -54,15 +57,30 @@ npm install
 Create `backend/.env`:
 
 ```
-MONGO_URI=your_mongodb_connection_string
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=ai_journal
+PGUSER=your_pg_user
+PGPASSWORD=your_pg_password
 JWT_SECRET=your_secret_key
 GROQ_API_KEY=your_groq_api_key
 ```
 
-- MongoDB: [mongodb.com/atlas](https://mongodb.com/atlas) — free tier available
+- PostgreSQL: [postgresql.org](https://www.postgresql.org) — create a local database or use a free cloud provider
 - Groq API key: [console.groq.com](https://console.groq.com) — free, no credit card needed
 
-### 3. Run the app
+### 3. Create the database and run migrations
+
+```bash
+# Create the database
+psql -U postgres -c "CREATE DATABASE ai_journal;"
+
+# Run migrations
+cd backend
+npm run migrate
+```
+
+### 4. Run the app
 
 ```bash
 # Backend (port 5000)
