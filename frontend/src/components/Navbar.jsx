@@ -12,7 +12,7 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link to="/" className="nav-brand">📓 AI Journal</Link>
+      <Link to="/" className="nav-brand">📓 AI Journal App</Link>
       <div className="nav-links">
         {user ? (
           <>
