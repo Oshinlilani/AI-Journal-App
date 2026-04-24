@@ -1,6 +1,6 @@
 import express from "express";
 import Groq from "groq-sdk";
-import Journal from "../models/Journal.js";
+import pool from "../db/client.js";
 import auth from "../middleware/auth.js";
 import dotenv from "dotenv";
 
@@ -22,16 +22,18 @@ async function analyzeMood(content) {
     ],
     temperature: 0.7,
   });
-
   const raw = completion.choices[0].message.content.trim();
   return JSON.parse(raw);
 }
 
-// GET all journals for logged-in user
+// GET all journals
 router.get("/", auth, async (req, res) => {
   try {
-    const journals = await Journal.find({ user: req.user.id }).sort({ createdAt: -1 });
-    res.json(journals);
+    const { rows } = await pool.query(
+      `SELECT * FROM journals WHERE user_id = $1 ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -40,53 +42,42 @@ router.get("/", auth, async (req, res) => {
 // GET single journal
 router.get("/:id", auth, async (req, res) => {
   try {
-    const journal = await Journal.findOne({ _id: req.params.id, user: req.user.id });
-    if (!journal) return res.status(404).json({ message: "Not found" });
-    res.json(journal);
+    const { rows } = await pool.query(
+      `SELECT * FROM journals WHERE id = $1 AND user_id = $2`,
+      [req.params.id, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: "Not found" });
+    res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// CREATE journal (no analysis)
+// CREATE journal
 router.post("/", auth, async (req, res) => {
   try {
     const { title, content } = req.body;
-    const journal = await Journal.create({ user: req.user.id, title, content });
-    res.status(201).json(journal);
+    const { rows } = await pool.query(
+      `INSERT INTO journals (user_id, title, content) VALUES ($1, $2, $3) RETURNING *`,
+      [req.user.id, title, content]
+    );
+    res.status(201).json(rows[0]);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// UPDATE journal (no analysis)
+// UPDATE journal
 router.put("/:id", auth, async (req, res) => {
   try {
     const { title, content } = req.body;
-    const journal = await Journal.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id },
-      { title, content },
-      { new: true }
+    const { rows } = await pool.query(
+      `UPDATE journals SET title = $1, content = $2, updated_at = NOW()
+       WHERE id = $3 AND user_id = $4 RETURNING *`,
+      [title, content, req.params.id, req.user.id]
     );
-    if (!journal) return res.status(404).json({ message: "Not found" });
-    res.json(journal);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ANALYZE mood for a journal
-router.post("/:id/analyze", auth, async (req, res) => {
-  try {
-    const journal = await Journal.findOne({ _id: req.params.id, user: req.user.id });
-    if (!journal) return res.status(404).json({ message: "Not found" });
-    const analysis = await analyzeMood(journal.content);
-    const updated = await Journal.findByIdAndUpdate(
-      journal._id,
-      { mood: analysis.mood, moodEmoji: analysis.emoji, moodSummary: analysis.summary },
-      { new: true }
-    );
-    res.json(updated);
+    if (!rows.length) return res.status(404).json({ message: "Not found" });
+    res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -95,9 +86,33 @@ router.post("/:id/analyze", auth, async (req, res) => {
 // DELETE journal
 router.delete("/:id", auth, async (req, res) => {
   try {
-    const journal = await Journal.findOneAndDelete({ _id: req.params.id, user: req.user.id });
-    if (!journal) return res.status(404).json({ message: "Not found" });
+    const { rows } = await pool.query(
+      `DELETE FROM journals WHERE id = $1 AND user_id = $2 RETURNING id`,
+      [req.params.id, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: "Not found" });
     res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ANALYZE mood
+router.post("/:id/analyze", auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM journals WHERE id = $1 AND user_id = $2`,
+      [req.params.id, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: "Not found" });
+
+    const analysis = await analyzeMood(rows[0].content);
+    const { rows: updated } = await pool.query(
+      `UPDATE journals SET mood = $1, mood_emoji = $2, mood_summary = $3, updated_at = NOW()
+       WHERE id = $4 RETURNING *`,
+      [analysis.mood, analysis.emoji, analysis.summary, req.params.id]
+    );
+    res.json(updated[0]);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

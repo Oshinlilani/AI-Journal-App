@@ -20,7 +20,7 @@ export default function JournalEditor() {
     if (isEdit) {
       api.get(`/journals/${id}`).then(({ data }) => {
         setForm({ title: data.title, content: data.content });
-        if (data.mood) setMood({ mood: data.mood, emoji: data.moodEmoji, summary: data.moodSummary });
+        if (data.mood) setMood({ mood: data.mood, emoji: data.mood_emoji, summary: data.mood_summary });
       });
     }
   }, [id, isEdit]);
@@ -33,7 +33,7 @@ export default function JournalEditor() {
       const { data } = savedId
         ? await api.put(`/journals/${savedId}`, form)
         : await api.post("/journals", form);
-      setSavedId(data._id);
+      setSavedId(data.id);
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Save failed");
@@ -48,7 +48,7 @@ export default function JournalEditor() {
     setError("");
     try {
       const { data } = await api.post(`/journals/${savedId}/analyze`);
-      setMood({ mood: data.mood, emoji: data.moodEmoji, summary: data.moodSummary });
+      setMood({ mood: data.mood, emoji: data.mood_emoji, summary: data.mood_summary });
     } catch (err) {
       setError(err.response?.data?.message || "Analysis failed");
     } finally {

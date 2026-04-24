@@ -20,7 +20,7 @@ export default function JournalView() {
 
   if (!journal) return <p className="loading-text">Loading...</p>;
 
-  const date = new Date(journal.createdAt).toLocaleDateString("en-US", {
+  const date = new Date(journal.created_at).toLocaleDateString("en-US", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
@@ -36,10 +36,10 @@ export default function JournalView() {
       <p className="view-date">{date}</p>
       <div className="view-title-row">
         <h1>{journal.title}</h1>
-        <MoodBadge mood={journal.mood} emoji={journal.moodEmoji} />
+        <MoodBadge mood={journal.mood} emoji={journal.mood_emoji} />
       </div>
-      {journal.moodSummary && (
-        <div className="view-insight">💡 {journal.moodSummary}</div>
+      {journal.mood_summary && (
+        <div className="view-insight">💡 {journal.mood_summary}</div>
       )}
       <div className="view-content">{journal.content}</div>
     </div>

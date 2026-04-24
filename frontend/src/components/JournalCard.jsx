@@ -8,22 +8,22 @@ export default function JournalCard({ journal, onDelete, onUpdate }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [cardData, setCardData] = useState(journal);
 
-  const date = new Date(cardData.createdAt).toLocaleDateString("en-US", {
+  const date = new Date(cardData.created_at).toLocaleDateString("en-US", {
     year: "numeric", month: "short", day: "numeric",
   });
 
   async function handleDelete(e) {
     e.stopPropagation();
     if (!confirm("Delete this entry?")) return;
-    await api.delete(`/journals/${cardData._id}`);
-    onDelete(cardData._id);
+    await api.delete(`/journals/${cardData.id}`);
+    onDelete(cardData.id);
   }
 
   async function handleAnalyze(e) {
     e.stopPropagation();
     setAnalyzing(true);
     try {
-      const { data } = await api.post(`/journals/${cardData._id}/analyze`);
+      const { data } = await api.post(`/journals/${cardData.id}/analyze`);
       setCardData(data);
       if (onUpdate) onUpdate(data);
     } finally {
@@ -32,14 +32,14 @@ export default function JournalCard({ journal, onDelete, onUpdate }) {
   }
 
   return (
-    <div className="journal-card" onClick={() => navigate(`/journal/${cardData._id}`)}>
+    <div className="journal-card" onClick={() => navigate(`/journal/${cardData.id}`)}>
       <div className="card-header">
         <h3>{cardData.title}</h3>
-        <MoodBadge mood={cardData.mood} emoji={cardData.moodEmoji} />
+        <MoodBadge mood={cardData.mood} emoji={cardData.mood_emoji} />
       </div>
       <p className="card-preview">{cardData.content.slice(0, 120)}...</p>
-      {cardData.moodSummary && (
-        <p className="card-insight">💡 {cardData.moodSummary}</p>
+      {cardData.mood_summary && (
+        <p className="card-insight">💡 {cardData.mood_summary}</p>
       )}
       <div className="card-footer">
         <span className="card-date">{date}</span>
@@ -54,7 +54,7 @@ export default function JournalCard({ journal, onDelete, onUpdate }) {
           </button>
           <button
             className="btn btn-sm"
-            onClick={(e) => { e.stopPropagation(); navigate(`/journal/${cardData._id}/edit`); }}
+            onClick={(e) => { e.stopPropagation(); navigate(`/journal/${cardData.id}/edit`); }}
           >
             Edit
           </button>
