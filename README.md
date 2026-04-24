@@ -62,6 +62,11 @@ PGPORT=5432
 PGDATABASE=ai_journal
 PGUSER=your_pg_user
 PGPASSWORD=your_pg_password
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=ai_journal
+PGUSER=your_pg_user
+PGPASSWORD=your_pg_password
 JWT_SECRET=your_secret_key
 GROQ_API_KEY=your_groq_api_key
 ```
