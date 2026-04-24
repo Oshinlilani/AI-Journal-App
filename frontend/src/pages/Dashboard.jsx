@@ -21,7 +21,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h1>My Journal</h1>
+        <h1>My Journal App</h1>
         <button className="btn btn-primary" onClick={() => navigate("/journal/new")}>
           + New Entry
         </button>
